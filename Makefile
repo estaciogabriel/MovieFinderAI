@@ -1,6 +1,6 @@
 # Makefile for MovieFinderAI
 
-.PHONY: install test test-unit test-api test-analysis lint format clean run run-api run-api-prod run-dashboard
+.PHONY: install test test-unit test-api test-analysis lint format clean run run-api run-api-prod run-dashboard upload
 
 # Virtualenv Python (falls back to python3)
 PYTHON ?= .venv/bin/python
@@ -69,6 +69,11 @@ run-api:
 run-api-prod:
 	@echo "Running FastAPI in production mode..."
 	$(PYTHON) -m uvicorn src.interfaces.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+
+upload:
+	@echo "Uploading CSVs to Chroma Cloud (CSVs/ -> movies_docs)..."
+	$(PYTHON) -m scripts.upload_to_chroma --popular-first
 
 
 help:
