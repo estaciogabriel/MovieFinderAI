@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 
 class MovieSearchRequest(BaseModel):
     """Request schema for movie search"""
-    query: str = Field(..., description="Search query for movies", min_length=3, max_length=500)
+    query: str = Field(..., description="Search query for movies", max_length=500)
     n_results: int = Field(default=5, ge=1, le=20, description="Number of results to return")
 
 
