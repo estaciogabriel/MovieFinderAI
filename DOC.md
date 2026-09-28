@@ -29,23 +29,23 @@ Semantic search system for movies using embeddings and Chroma Cloud. Enter detai
 
 **Requiriments** IMPORTANT
 
- "python3 -m venv venv"
+ "python3 -m venv .venv"
 
- "source venv/bin/activate"
+ "uv pip install --python .venv/bin/python -r pyproject.toml"
 
- "pip install requirements.txt"
+ "cp .env.example .env"  (fill in CHROMA_API_KEY)
 
 **ChatBot**
 
- "python3 app.py"
+ "make run"              (src/interfaces/pages/gradio_app.py)
  
 **Dashboard**
  
- "streamlit run app_dashboard.py"
+ "make run-dashboard"    (src/interfaces/pages/dashboard.py)
 
  **Pipiline**
 
- "python3 movies_knowledge_base/pipeline.py"
+ ".venv/bin/python -m scripts.pipeline"
 
  
 

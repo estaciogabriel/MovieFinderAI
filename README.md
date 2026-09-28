@@ -8,7 +8,7 @@ A system that allows searching for movies using natural language. Type "action m
 
 ## How It Works
 
-1. 43,970 movies from Kaggle transformed into embeddings (384-dimensional vectors)
+1. 43,970 movies from Kaggle transformed into embeddings (768-dimensional vectors)
 2. Stored in Chroma Cloud (vector database)
 3. Semantic similarity search using sentence-transformers
 
@@ -16,7 +16,7 @@ A system that allows searching for movies using natural language. Type "action m
 
 - Python 3.12+
 - FastAPI (API Framework)
-- Sentence-Transformers (all-MiniLM-L6-v2)
+- Sentence-Transformers (all-mpnet-base-v2)
 - Chroma Cloud
 - Pydantic (Data validation)
 - Pytest (Testing)
@@ -25,80 +25,81 @@ A system that allows searching for movies using natural language. Type "action m
 
 ```
 MovieFinderAI/
-├── api/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI application entry point
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   └── movies.py        # Movie search endpoints
-│   └── schemas/
-│       ├── __init__.py
-│       └── movie.py         # Pydantic models
-├── movies_knowledge_base/
-│   ├── config/
-│   │   └── chroma_config.py
-│   ├── pipeline.py
-│   └── src/
-│       ├── application/
-│       │   ├── search.py
-│       │   ├── search_cloud.py
-│       │   ├── search_validator.py
-│       │   └── enhanced_search.py
-│       ├── data/
-│       │   ├── document_generator.py
-│       │   └── vector_db.py
-│       ├── repository/
-│       │   └── chroma_repository.py
-│       ├── services/
-│       │   ├── embedder.py
-│       │   ├── anomaly_detection.py
-│       │   ├── clustering.py
-│       │   ├── visualizer.py
-│       │   └── evaluate.py
-│       └── tests/
-│           ├── test_anomaly_detection.py
-│           ├── test_clustering.py
-│           └── test_quality_classifier.py
+├── src/
+│   ├── config.py              # Environment-based configuration (.env)
+│   ├── schemas/
+│   │   └── movie.py           # Pydantic request/response models
+│   ├── application/           # Business logic (use cases)
+│   │   ├── search.py
+│   │   ├── search_cloud.py
+│   │   ├── search_validator.py
+│   │   └── enhanced_search.py
+│   ├── infrastructure/        # External tech: Chroma, embeddings, ML tooling
+│   │   ├── chroma_repository.py
+│   │   ├── embedder.py
+│   │   ├── vector_db.py
+│   │   ├── document_generator.py
+│   │   ├── clustering.py
+│   │   ├── anomaly_detection.py
+│   │   ├── evaluate.py
+│   │   └── visualizer.py
+│   └── interfaces/
+│       ├── api/               # REST interface (FastAPI)
+│       │   ├── main.py
+│       │   └── routes/
+│       │       └── movies.py
+│       └── pages/             # UI interfaces
+│           ├── gradio_app.py
+│           └── dashboard.py   # Streamlit
+├── scripts/
+│   └── pipeline.py            # Download embeddings from Chroma Cloud
 ├── tests/
-│   ├── __init__.py
 │   ├── conftest.py
-│   ├── api/
-│   │   └── test_movies_api.py
-│   └── unit/
-│       ├── __init__.py
-│       ├── test_search_validator.py
-│       ├── test_embedder.py
-│       └── test_chroma_repository.py
-├── app.py                     # Original Gradio app (kept for reference)
-├── app_dashboard.py
-├── main.py
-├── requirements.txt
+│   ├── api/                   # API integration tests
+│   ├── unit/                  # Unit tests
+│   └── analysis/               # Clustering/anomaly tests (need local embeddings)
+├── .env.example
 ├── pyproject.toml
 ├── Makefile
 ├── run_api.sh
 └── README.md
 ```
 
+Dependency rule: `interfaces -> application -> infrastructure` (schemas shared).
+
 ## Quick Start
 
 ### 1. Install Dependencies
 
 ```bash
-# Using pip
-pip install -r requirements.txt
+# Create a virtualenv (Python 3.12+)
+uv venv
 
-# Or using the Makefile
+# Install dependencies
 make install
+
+# Or directly
+uv pip install --python .venv/bin/python -r pyproject.toml
 ```
 
-### 2. Run the API
+### 2. Configure Credentials
+
+```bash
+# Copy the template and fill in your Chroma Cloud API key
+cp .env.example .env
+```
+
+The API key is never committed: `.env` is gitignored and `src/config.py`
+reads it via environment variables (loaded with python-dotenv).
+
+### 3. Run the API
 
 ```bash
 # Development mode (with hot reload)
 make run-api
 
 # Or directly with uvicorn
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+.venv/bin/python -m uvicorn src.interfaces.api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Production mode
 make run-api-prod
@@ -191,6 +192,9 @@ make test-unit
 # Run API tests only
 make test-api
 
+# Run analysis tests only (need embeddings from scripts/pipeline.py)
+make test-analysis
+
 # Run tests with coverage
 make test-cov
 
@@ -213,31 +217,24 @@ make clean
 
 ## Configuration
 
-The application uses Chroma Cloud for vector database storage. Configuration is in:
-
-```python
-# movies_knowledge_base/config/chroma_config.py
-CHROMA_API_KEY = "your-api-key"
-CHROMA_TENANT = "your-tenant-id"
-CHROMA_DATABASE = "your-database-name"
-```
-
-## Environment Variables
-
-You can also use environment variables:
+The application uses Chroma Cloud for vector database storage. Credentials
+come from environment variables, loaded from a `.env` file at the project
+root (see `.env.example`):
 
 ```bash
-export CHROMA_API_KEY="your-api-key"
-export CHROMA_TENANT="your-tenant-id"
-export CHROMA_DATABASE="your-database-name"
+CHROMA_API_KEY=your-api-key       # required
+CHROMA_TENANT=your-tenant-id      # optional (has default)
+CHROMA_DATABASE=your-database     # optional (has default)
 ```
 
-## Original Gradio App
-
-The original Gradio-based application is still available in `app.py`. To run it:
+## Other Interfaces
 
 ```bash
-python app.py
+# Gradio chat app
+make run            # src/interfaces/pages/gradio_app.py
+
+# Streamlit dashboard
+make run-dashboard  # src/interfaces/pages/dashboard.py
 ```
 
 ## License
