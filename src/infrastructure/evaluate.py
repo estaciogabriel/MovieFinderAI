@@ -3,15 +3,13 @@ Avaliação do sistema de busca semântica
 """
 
 import os
-import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from src.services.embedder import DocumentEmbedder
-from src.data.vector_db import VectorDatabase
+from src.infrastructure.embedder import DocumentEmbedder
+from src.infrastructure.vector_db import VectorDatabase
 
 def evaluate_retrieval(db, embedder, test_docs, test_files, k=5):
     """

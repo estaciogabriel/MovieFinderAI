@@ -2,13 +2,9 @@
 Pipeline to download embeddings from Chroma Cloud and save locally
 """
 
-import os
-import sys
 from pathlib import Path
-
-sys.path.insert(0, os.path.dirname(__file__))
-from src.repository.chroma_repository import ChromaRepository
-from src.services.embedder import DocumentEmbedder
+from src.infrastructure.chroma_repository import ChromaRepository
+from src.infrastructure.embedder import DocumentEmbedder
 import numpy as np
 import pickle
 from tqdm import tqdm
@@ -49,7 +45,7 @@ def download_from_cloud():
 def save_locally(embeddings, documents):
     """Save embeddings and documents locally"""
     
-    base_dir = Path(__file__).parent
+    base_dir = Path(__file__).resolve().parents[1]
     output_dir = base_dir / 'data/processed/embeddings'
     output_dir.mkdir(parents=True, exist_ok=True)
     

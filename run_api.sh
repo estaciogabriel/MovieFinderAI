@@ -9,5 +9,9 @@ echo ""
 
 cd "$(dirname "$0")"
 
+if [ ! -f .env ]; then
+    echo "WARNING: .env not found. Copy .env.example to .env and set CHROMA_API_KEY."
+fi
+
 # Run with uvicorn
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+.venv/bin/python -m uvicorn src.interfaces.api.main:app --host 0.0.0.0 --port 8000 --reload

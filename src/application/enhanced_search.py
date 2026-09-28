@@ -2,10 +2,10 @@
 Busca aprimorada com clustering e detecção de anomalias
 """
 
-from src.services.embedder import DocumentEmbedder
-from src.data.vector_db import VectorDatabase
-from src.services.clustering import DocumentClusterer
-from src.services.anomaly_detection import AnomalyDetector
+from src.infrastructure.embedder import DocumentEmbedder
+from src.infrastructure.vector_db import VectorDatabase
+from src.infrastructure.clustering import DocumentClusterer
+from src.infrastructure.anomaly_detection import AnomalyDetector
 import numpy as np
 
 class EnhancedSearch:

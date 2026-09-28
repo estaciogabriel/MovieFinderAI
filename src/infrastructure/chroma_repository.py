@@ -4,7 +4,7 @@ Centralized connection to Chroma Cloud database
 """
 
 import chromadb
-from config.chroma_config import CHROMA_API_KEY, CHROMA_TENANT, CHROMA_DATABASE
+from src.config import CHROMA_API_KEY, CHROMA_TENANT, CHROMA_DATABASE
 
 class ChromaRepository:
     

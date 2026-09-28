@@ -159,9 +159,11 @@ class MovieDocumentGenerator:
         metadata_df.to_csv(output_path / 'documents_metadata.csv', index=False)
         print(f"Salvos em {output_dir}")
 
-def main():
-    data_dir = '/home/gabriel/dsml_final_project/data/archive'
-    output_dir = '/home/gabriel/movies_knowledge_base/data/raw/documents'
+def main(data_dir=None, output_dir=None):
+    from pathlib import Path as _Path
+    repo_root = _Path(__file__).resolve().parents[2]
+    data_dir = data_dir or str(repo_root / 'data/archive')
+    output_dir = output_dir or str(repo_root / 'data/raw/documents')
     generator = MovieDocumentGenerator(data_dir)
     doc = generator.generate_document(862)
     print(f"\nExemplo: {doc['title']} ({doc['year']})")

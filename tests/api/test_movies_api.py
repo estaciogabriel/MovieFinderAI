@@ -3,19 +3,14 @@ Integration tests for Movies API
 """
 
 import pytest
-import sys
-from pathlib import Path
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
-
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.fixture
 def client():
     """Create test client for FastAPI app"""
-    from api.main import app
+    from src.interfaces.api.main import app
     return TestClient(app)
 
 
@@ -42,7 +37,7 @@ class TestMoviesAPI:
         assert "docs" in data
         assert "health" in data
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_post_valid(self, mock_search, client):
         """Test POST search endpoint with valid query"""
         # Setup mock
@@ -67,7 +62,7 @@ class TestMoviesAPI:
         assert data["results"][0]["distance"] == 0.1
         assert data["error"] is None
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_get_valid(self, mock_search, client):
         """Test GET search endpoint with valid query"""
         # Setup mock
@@ -89,7 +84,7 @@ class TestMoviesAPI:
         assert data["count"] == 1
         assert len(data["results"]) == 1
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_empty_query(self, mock_search, client):
         """Test search with empty query"""
         # Test POST
@@ -114,7 +109,7 @@ class TestMoviesAPI:
         assert data["count"] == 0
         assert data["error"] == "Your search is empty, try again!"
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_too_short(self, mock_search, client):
         """Test search with too short query"""
         response = client.post(
@@ -127,7 +122,7 @@ class TestMoviesAPI:
         assert data["count"] == 0
         assert data["error"] == "Your search is too short, try again!"
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_special_chars_only(self, mock_search, client):
         """Test search with only special characters"""
         response = client.post(
@@ -140,7 +135,7 @@ class TestMoviesAPI:
         assert data["count"] == 0
         assert data["error"] == "Your search has only special characters, try again!"
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_no_results(self, mock_search, client):
         """Test search with no results"""
         # Setup mock with no results
@@ -160,7 +155,7 @@ class TestMoviesAPI:
         assert data["count"] == 0
         assert len(data["results"]) == 0
     
-    @patch('api.routes.movies.search_movies_cloud')
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_exception(self, mock_search, client):
         """Test search when exception occurs"""
         # Setup mock to raise exception
@@ -231,7 +226,7 @@ class TestAPIResponseSchemas:
     
     def test_movie_search_response_schema(self, client):
         """Test that response matches the schema"""
-        with patch('api.routes.movies.search_movies_cloud') as mock_search:
+        with patch('src.interfaces.api.routes.movies.search_movies_cloud') as mock_search:
             mock_search.return_value = {
                 'documents': [['Test movie']],
                 'distances': [[0.5]],

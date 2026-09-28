@@ -5,16 +5,14 @@ Testes unitários para detecção de anomalias
 import pytest
 import numpy as np
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.services.anomaly_detection import AnomalyDetector
+from src.infrastructure.anomaly_detection import AnomalyDetector
 
 @pytest.fixture
 def detector():
     """Fixture para criar detector"""
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).resolve().parents[2]
     embeddings_dir = base_dir / 'data/processed/embeddings'
     
     if not embeddings_dir.exists():

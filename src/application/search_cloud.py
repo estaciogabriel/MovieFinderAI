@@ -2,8 +2,8 @@
 Busca usando Chroma Cloud
 """
 
-from src.services.embedder import DocumentEmbedder
-from src.repository.chroma_repository import ChromaRepository
+from src.infrastructure.embedder import DocumentEmbedder
+from src.infrastructure.chroma_repository import ChromaRepository
 from src.application.search_validator import verify_search_query
 
 def search_movies_cloud(query, n_results=5):

@@ -2,17 +2,13 @@
 Movie search routes for FastAPI
 """
 
-import os
-import sys
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
-# Add movies_knowledge_base to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'movies_knowledge_base')))
 
-from api.schemas.movie import (
+from src.schemas.movie import (
     MovieSearchRequest,
     MovieSearchResponse,
     MovieResult,

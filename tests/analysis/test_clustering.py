@@ -5,16 +5,14 @@ Testes unitários para o módulo de clustering
 import pytest
 import numpy as np
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.services.clustering import DocumentClusterer
+from src.infrastructure.clustering import DocumentClusterer
 
 @pytest.fixture
 def clusterer():
     """Fixture para criar clusterer com dados de teste"""
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).resolve().parents[2]
     embeddings_dir = base_dir / 'data/processed/embeddings'
     
     if not embeddings_dir.exists():

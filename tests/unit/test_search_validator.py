@@ -3,13 +3,8 @@ Unit tests for search validator
 """
 
 import pytest
-import sys
-from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from movies_knowledge_base.src.application.search_validator import verify_search_query
+from src.application.search_validator import verify_search_query
 
 
 class TestSearchValidator:

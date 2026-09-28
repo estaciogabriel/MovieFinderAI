@@ -4,19 +4,15 @@ Visual exploration interface for Movies Knowledge Base
 """
 
 import streamlit as st
-import sys
 from pathlib import Path
-
-base_dir = Path(__file__).parent / 'movies_knowledge_base'
-sys.path.insert(0, str(base_dir.parent / 'movies_knowledge_base'))
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
-from src.services.embedder import DocumentEmbedder
+from src.infrastructure.embedder import DocumentEmbedder
 from src.application.search_cloud import search_movies_cloud
-from src.repository.chroma_repository import ChromaRepository
-from src.services.clustering import DocumentClusterer
-from src.services.anomaly_detection import AnomalyDetector
+from src.infrastructure.chroma_repository import ChromaRepository
+from src.infrastructure.clustering import DocumentClusterer
+from src.infrastructure.anomaly_detection import AnomalyDetector
 
 st.set_page_config(
     page_title="Movies Knowledge Base",
@@ -84,7 +80,7 @@ def main():
         
         if st.button("Run Clustering", type="primary"):
             with st.spinner(f"Running {algorithm}..."):
-                base_path = Path(__file__).parent / 'movies_knowledge_base'
+                base_path = Path(__file__).resolve().parents[3]
                 embeddings_dir = base_path / 'data/processed/embeddings'
                 
                 try:
@@ -149,7 +145,7 @@ def main():
         
         if st.button("Detect Anomalies", type="primary"):
             with st.spinner(f"Running {method}..."):
-                base_path = Path(__file__).parent / 'movies_knowledge_base'
+                base_path = Path(__file__).resolve().parents[3]
                 embeddings_dir = base_path / 'data/processed/embeddings'
                 
                 try:

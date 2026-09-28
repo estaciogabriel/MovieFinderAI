@@ -1,10 +1,7 @@
 import os
-import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
-from src.data.vector_db import VectorDatabase
-from src.services.embedder import DocumentEmbedder
+from src.infrastructure.vector_db import VectorDatabase
+from src.infrastructure.embedder import DocumentEmbedder
 from src.application.search_validator import verify_search_query
 
 def search_movies(query, n_results=5):
