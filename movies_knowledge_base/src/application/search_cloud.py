@@ -17,7 +17,7 @@ def search_movies_cloud(query, n_results=5):
             'metadatas': [[{'error': True}]]
         }
     
-    embedder = DocumentEmbedder(model_name='all-MiniLM-L6-v2')
+    embedder = DocumentEmbedder(model_name='all-mpnet-base-v2')
     query_embedding = embedder.model.encode([query], normalize_embeddings=True)[0]
     
     repo = ChromaRepository()
