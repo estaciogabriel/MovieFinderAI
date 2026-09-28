@@ -170,8 +170,15 @@ class TestMoviesAPI:
         data = response.json()
         assert "Internal server error" in data["detail"]
     
-    def test_search_movies_validation_n_results(self, client):
+    @patch('src.interfaces.api.routes.movies.search_movies_cloud')
+    def test_search_movies_validation_n_results(self, mock_search, client):
         """Test validation of n_results parameter"""
+        mock_search.return_value = {
+            'documents': [['Movie 1 description']],
+            'distances': [[0.1]],
+            'metadatas': [[{'id': 1}]]
+        }
+
         # Test with n_results = 0 (should fail)
         response = client.post(
             "/api/v1/movies/search",

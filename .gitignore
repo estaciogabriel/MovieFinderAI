@@ -16,12 +16,12 @@ parts/
 sdist/
 var/
 *.egg-info/
-.installed.cfg
+.installed.cfg/
 *.egg
 
 # Data and databases
-movies_knowledge_base/chroma_db/
-movies_knowledge_base/data/
+chroma_db/
+data/
 *.sqlite3
 *.db
 
@@ -32,19 +32,15 @@ env/
 ENV/
 venv.bak/
 env.bak/
-movies_knowledge_base/.venv/
 
 # IDEs
 .vscode/
 .idea/
-movies_knowledge_base/.idea/
 *.swp
 *.swo
 
-
 # Streamlit
 .streamlit/
-movies_knowledge_base/.streamlit/
 
 # Logs
 *.log
@@ -55,7 +51,7 @@ movies_knowledge_base/.streamlit/
 Thumbs.db
 
 # Models
-movies_knowledge_base/models/
+models/
 
-# Git
-movies_knowledge_base/.git/
+# Environment variables
+.env
