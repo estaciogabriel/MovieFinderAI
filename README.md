@@ -92,7 +92,31 @@ cp .env.example .env
 The API key is never committed: `.env` is gitignored and `src/config.py`
 reads it via environment variables (loaded with python-dotenv).
 
-### 3. Run the API
+### 3. Populate the Database
+
+The vector database starts empty. To populate it with the TMDB dataset
+(~44,500 movies):
+
+```bash
+# Place the TMDB CSVs in CSVs/ (movies_metadata.csv, credits.csv, keywords.csv)
+# CSVs/ is gitignored: do not commit the raw data
+
+make upload
+```
+
+- Uploads most popular movies first, so the search becomes useful within
+  minutes while the rest continues
+- Idempotent (`upsert`): safe to stop and re-run to resume
+- Expect roughly 2-3 docs/s on CPU (a few hours for the full dataset)
+
+Check progress anytime:
+
+```bash
+curl http://localhost:8000/api/v1/health
+# documents_count shows how many movies are indexed
+```
+
+### 4. Run the API
 
 ```bash
 # Development mode (with hot reload)
@@ -105,7 +129,7 @@ make run-api
 make run-api-prod
 ```
 
-### 3. Access the API
+### 5. Access the API
 
 - **Base URL**: `http://localhost:8000`
 - **Swagger Docs**: `http://localhost:8000/docs`
@@ -122,16 +146,25 @@ make run-api-prod
 GET /api/v1/health
 ```
 
-Returns the health status of the API and database connection.
+Returns the health status of the API and the REAL state of the vector
+database (never hardcoded).
 
-**Response (200 OK):**
+**Response (200 OK, database populated):**
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0",
-  "database_status": "connected"
+  "version": "1.1.0",
+  "database_status": "connected",
+  "documents_count": 44506,
+  "message": null
 }
 ```
+
+**Other states:**
+- `200 OK` + `"database_status": "empty"`: reachable but has no documents
+  yet; `message` explains how to populate it
+- `503 Service Unavailable` + `"database_status": "unreachable"`: cannot
+  reach Chroma Cloud; `message` names the environment variables to check
 
 #### Search Movies (POST)
 
@@ -140,7 +173,7 @@ POST /api/v1/movies/search
 Content-Type: application/json
 
 {
-  "query": "action movie",
+  "query": "A movie about a ship that collides with an iceberg",
   "n_results": 5
 }
 ```
@@ -148,29 +181,38 @@ Content-Type: application/json
 Search for movies using semantic search.
 
 **Request Body:**
-- `query` (string, required): Search query for movies (min: 3 chars, max: 500 chars)
+- `query` (string, required): Search query for movies (max: 500 chars)
 - `n_results` (integer, optional): Number of results to return (default: 5, min: 1, max: 20)
 
 **Response (200 OK):**
 ```json
 {
-  "query": "action movie",
+  "query": "A movie about a ship that collides with an iceberg",
   "results": [
     {
-      "document": "Movie description or title",
-      "distance": 0.1234,
-      "metadata": { ... }
-    }
+      "document": "Battleship (2012)\nGenres: Action, Sci-Fi, Thriller\n...",
+      "distance": 0.885,
+      "metadata": { "movie_id": 85131, "title": "Battleship", "year": "2012", "genres": "..." }
+    },
+    { "...": "..." }
   ],
   "count": 5,
   "error": null
 }
 ```
 
+A semantic query describes the movie you want ("a ship that collides
+with an iceberg") and the API returns the closest matches by meaning —
+Titanic (1997) is among the expected results.
+
 **Error Responses:**
-- `422 Unprocessable Entity`: Validation error (query too short/long, invalid n_results)
-- `200 OK with error field`: Business validation error (empty query, special chars only)
-- `500 Internal Server Error`: Database connection or processing error
+- `422 Unprocessable Entity`: Validation error (query too long, invalid n_results)
+- `200 OK with error field`: Business validation error (empty/short query,
+  special chars only) or an empty database (the error field explains how
+  to populate it)
+- `503 Service Unavailable`: Chroma Cloud unreachable (structured detail
+  with guidance)
+- `500 Internal Server Error`: unexpected failure during search
 
 #### Search Movies (GET)
 

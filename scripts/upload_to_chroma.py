@@ -93,6 +93,8 @@ def iter_documents(csv_dir, limit, popular_first=False):
 
     movies["id"] = pd.to_numeric(movies["id"], errors="coerce")
     credits["id"] = pd.to_numeric(credits["id"], errors="coerce")
+    # credits.csv has duplicate ids; keep one row per movie
+    credits = credits.drop_duplicates(subset="id", keep="first")
     credits_by_id = credits.set_index("id")
 
     movies = movies[movies["overview"].notna() & movies["title"].notna()]
