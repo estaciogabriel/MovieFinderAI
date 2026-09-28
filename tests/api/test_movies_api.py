@@ -49,7 +49,7 @@ class TestMoviesAPI:
         mock_search.return_value = {
             'documents': [['Movie 1 description', 'Movie 2 description']],
             'distances': [[0.1, 0.2]],
-            'metadatas': [{'id': 1}, {'id': 2}]
+            'metadatas': [[{'id': 1}, {'id': 2}]]
         }
         
         # Test
@@ -74,7 +74,7 @@ class TestMoviesAPI:
         mock_search.return_value = {
             'documents': [['Movie 1 description']],
             'distances': [[0.1]],
-            'metadatas': [{'id': 1}]
+            'metadatas': [[{'id': 1}]]
         }
         
         # Test
@@ -235,7 +235,7 @@ class TestAPIResponseSchemas:
             mock_search.return_value = {
                 'documents': [['Test movie']],
                 'distances': [[0.5]],
-                'metadatas': [{'id': 1}]
+                'metadatas': [[{'id': 1}]]
             }
             
             response = client.post(
