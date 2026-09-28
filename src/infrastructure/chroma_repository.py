@@ -27,7 +27,7 @@ class ChromaRepository:
             tenant=CHROMA_TENANT,
             database=CHROMA_DATABASE
         )
-        self.collection = self.client.get_collection("movies_docs")
+        self.collection = self.client.get_or_create_collection("movies_docs")
     
     def search(self, query_embedding, n_results=5):
         return self.collection.query(

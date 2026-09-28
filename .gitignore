@@ -55,3 +55,6 @@ models/
 
 # Environment variables
 .env
+
+# Raw dataset (do not commit: 900MB of CSVs)
+CSVs/

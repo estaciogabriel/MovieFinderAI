@@ -1,9 +1,21 @@
 """
 Pydantic schemas for MovieFinderAI API
+
+These models are the API contract: every endpoint's request and response
+shape is defined here. Frontends and integrations can rely on them.
 """
+
+from enum import Enum
 
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+
+
+class DatabaseStatus(str, Enum):
+    """Real state of the vector database, as seen by the API."""
+    CONNECTED = "connected"      # reachable and has documents
+    EMPTY = "empty"              # reachable, but zero documents
+    UNREACHABLE = "unreachable"  # cannot connect (credentials, network, outage)
 
 
 class MovieSearchRequest(BaseModel):
@@ -29,9 +41,14 @@ class MovieSearchResponse(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Response schema for health check"""
-    status: str = Field(..., description="API status")
+    status: str = Field(..., description="API status: 'healthy' or 'degraded'")
     version: str = Field(..., description="API version")
-    database_status: Optional[str] = Field(default=None, description="Database connection status")
+    database_status: DatabaseStatus = Field(..., description="Real state of the vector database")
+    documents_count: int = Field(..., description="Number of documents currently in the database")
+    message: Optional[str] = Field(
+        default=None,
+        description="Guidance for the user when something needs attention"
+    )
 
 
 class ErrorResponse(BaseModel):

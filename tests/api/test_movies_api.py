@@ -6,6 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 
+from src.schemas.movie import DatabaseStatus
+
 
 @pytest.fixture
 def client():
@@ -14,18 +16,57 @@ def client():
     return TestClient(app)
 
 
+def db_state(status, count=42):
+    return patch(
+        'src.interfaces.api.routes.movies.get_database_state',
+        return_value=(status, count)
+    )
+
+
 class TestMoviesAPI:
     """Integration tests for movies API endpoints"""
-    
-    def test_health_check(self, client):
-        """Test health check endpoint"""
+
+    @pytest.fixture(autouse=True)
+    def database_connected(self):
+        """Default: pretend the database is connected and populated."""
+        with db_state(DatabaseStatus.CONNECTED, 42):
+            yield
+
+    def test_health_check_connected(self, client):
+        """Health check with a populated database: healthy + 200"""
         response = client.get("/api/v1/health")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "1.0.0"
-        assert "database_status" in data
+        assert data["version"] == "1.1.0"
+        assert data["database_status"] == "connected"
+        assert data["documents_count"] == 42
+        assert data["message"] is None
+
+    def test_health_check_empty_database(self, client):
+        """Health check with an empty database: still 200, but guides the user"""
+        with db_state(DatabaseStatus.EMPTY, 0):
+            response = client.get("/api/v1/health")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["database_status"] == "empty"
+        assert data["documents_count"] == 0
+        assert "empty" in data["message"].lower()
+        assert "upload" in data["message"]
+
+    def test_health_check_unreachable_database(self, client):
+        """Health check with Chroma down: 503 + guidance"""
+        with db_state(DatabaseStatus.UNREACHABLE, 0):
+            response = client.get("/api/v1/health")
+
+        assert response.status_code == 503
+        data = response.json()
+        assert data["status"] == "degraded"
+        assert data["database_status"] == "unreachable"
+        assert "CHROMA_API_KEY" in data["message"]
     
     def test_root_endpoint(self, client):
         """Test root endpoint"""
@@ -168,7 +209,34 @@ class TestMoviesAPI:
         
         assert response.status_code == 500
         data = response.json()
-        assert "Internal server error" in data["detail"]
+        assert data["detail"]["code"] == "search_failed"
+
+    def test_search_movies_empty_database(self, client):
+        """Search on an empty database: 200 with guidance in error field"""
+        with db_state(DatabaseStatus.EMPTY, 0):
+            response = client.post(
+                "/api/v1/movies/search",
+                json={"query": "action movie", "n_results": 5}
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert "empty" in data["error"].lower()
+        assert "upload" in data["error"]
+
+    def test_search_movies_unreachable_database(self, client):
+        """Search with Chroma down: 503 with structured guidance"""
+        with db_state(DatabaseStatus.UNREACHABLE, 0):
+            response = client.post(
+                "/api/v1/movies/search",
+                json={"query": "action movie", "n_results": 5}
+            )
+
+        assert response.status_code == 503
+        data = response.json()
+        assert data["detail"]["code"] == "database_unreachable"
+        assert "CHROMA_API_KEY" in data["detail"]["message"]
     
     @patch('src.interfaces.api.routes.movies.search_movies_cloud')
     def test_search_movies_validation_n_results(self, mock_search, client):
@@ -233,7 +301,8 @@ class TestAPIResponseSchemas:
     
     def test_movie_search_response_schema(self, client):
         """Test that response matches the schema"""
-        with patch('src.interfaces.api.routes.movies.search_movies_cloud') as mock_search:
+        with db_state(DatabaseStatus.CONNECTED, 42), \
+             patch('src.interfaces.api.routes.movies.search_movies_cloud') as mock_search:
             mock_search.return_value = {
                 'documents': [['Test movie']],
                 'distances': [[0.5]],
