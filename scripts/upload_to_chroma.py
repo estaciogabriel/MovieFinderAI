@@ -99,6 +99,8 @@ def iter_documents(csv_dir, limit, popular_first=False):
 
     movies = movies[movies["overview"].notna() & movies["title"].notna()]
     movies = movies[movies["id"].notna()]
+    # movies_metadata.csv also has duplicate ids; keep one row per movie
+    movies = movies.drop_duplicates(subset="id", keep="first")
     if popular_first:
         movies = movies.sort_values("vote_count", ascending=False)
         logger.info("Uploading most popular movies first (vote_count desc)")
@@ -148,11 +150,21 @@ def main():
     existing = collection.count()
     logger.info("Collection 'movies_docs' currently has %d documents", existing)
 
+    # Resume support: skip documents already uploaded on a previous run
+    existing_ids = set()
+    if existing:
+        existing_ids = set(collection.get(include=[])["ids"])
+        logger.info("Resuming: %d documents already in collection", len(existing_ids))
+
     started = time.perf_counter()
     total = 0
+    skipped = 0
     batch_ids, batch_docs, batch_metas = [], [], []
 
     for movie_id, text, metadata in iter_documents(csv_dir, args.limit, args.popular_first):
+        if str(movie_id) in existing_ids:
+            skipped += 1
+            continue
         batch_ids.append(str(movie_id))
         batch_docs.append(text)
         batch_metas.append(metadata)
@@ -189,8 +201,8 @@ def main():
         total += len(batch_ids)
 
     logger.info(
-        "Done: %d documents uploaded in %.1f minutes. Collection total: %d",
-        total, (time.perf_counter() - started) / 60, collection.count()
+        "Done: %d documents uploaded (%d skipped as already present) in %.1f minutes. Collection total: %d",
+        total, skipped, (time.perf_counter() - started) / 60, collection.count()
     )
 
 
