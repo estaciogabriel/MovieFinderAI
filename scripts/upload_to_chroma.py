@@ -30,6 +30,20 @@ logger = logging.getLogger("moviefinder.upload")
 MODEL_NAME = "all-mpnet-base-v2"
 
 
+def fetch_existing_ids(collection, page_size=300):
+    """Fetch ALL ids with pagination. Chroma Cloud's free tier caps each
+    get() at 300 records (Limit value quota): bare collection.get() only
+    returns the first 300, which would make resume miss most documents."""
+    ids = set()
+    offset = 0
+    while True:
+        batch = collection.get(include=[], limit=page_size, offset=offset)["ids"]
+        ids.update(batch)
+        if len(batch) < page_size:
+            return ids
+        offset += page_size
+
+
 def safe_parse(json_str):
     if pd.isna(json_str) or json_str == "":
         return []
@@ -153,7 +167,7 @@ def main():
     # Resume support: skip documents already uploaded on a previous run
     existing_ids = set()
     if existing:
-        existing_ids = set(collection.get(include=[])["ids"])
+        existing_ids = fetch_existing_ids(collection)
         logger.info("Resuming: %d documents already in collection", len(existing_ids))
 
     started = time.perf_counter()
