@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gradio as gr
 from huggingface_hub import InferenceClient
 from src.application.search_cloud import search_movies_cloud as sear
@@ -5,17 +7,8 @@ from src.application.search_cloud import search_movies_cloud as sear
 def welcome(name):
     return f"Welcome to Gradio, {name}!"
 
-css = """
-body {
-    background: #f5f5f5;
-}
-.gradio-container {
-    background: #f5f5f5 ;
-}
-#warning {background-color: #f3dcd}
-.feedback textarea {font-size: 24px }
-.title {font-size: 32px ; text-align: center;}
-"""
+_css_path = Path(__file__).parent / "static" / "chat.css"
+css = _css_path.read_text(encoding="utf-8")
 
 def prompt_template():
     return """You are a helpful assistant that helps users find information about movies from a knowledge base. Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer."""
