@@ -18,10 +18,16 @@ class ChromaRepository:
         return cls._instance
     
     def _initialize(self):
-        if not CHROMA_API_KEY:
+        missing = [name for name, value in (
+            ("CHROMA_API_KEY", CHROMA_API_KEY),
+            ("CHROMA_TENANT", CHROMA_TENANT),
+            ("CHROMA_DATABASE", CHROMA_DATABASE),
+        ) if not value]
+        if missing:
             raise RuntimeError(
-                "CHROMA_API_KEY is not set. "
-                "Copy .env.example to .env and fill in your Chroma Cloud API key."
+                f"Missing required configuration: {', '.join(missing)}. "
+                "Copy .env.example to .env and fill in your Chroma Cloud "
+                "credentials."
             )
         self.client = chromadb.CloudClient(
             api_key=CHROMA_API_KEY,

@@ -300,14 +300,16 @@ make clean
 
 ## Configuration
 
-The application uses Chroma Cloud for vector database storage. Credentials
-come from environment variables, loaded from a `.env` file at the project
-root (see `.env.example`):
+The application uses Chroma Cloud for vector database storage. All three
+credentials come from environment variables, loaded from a `.env` file at
+the project root (see `.env.example`). There are **no defaults in the
+source**: a missing value fails fast with an error naming the missing
+variables, instead of silently connecting to the wrong database.
 
 ```bash
 CHROMA_API_KEY=your-api-key       # required
-CHROMA_TENANT=your-tenant-id      # optional (has default)
-CHROMA_DATABASE=your-database     # optional (has default)
+CHROMA_TENANT=your-tenant-id       # required
+CHROMA_DATABASE=your-database      # required
 ```
 
 ## Other Interfaces

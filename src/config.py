@@ -2,7 +2,9 @@
 Central configuration: reads credentials from environment variables.
 
 Values come from the process environment (or a .env file at the project
-root, loaded by python-dotenv). Never hardcode secrets in source files.
+root, loaded by python-dotenv). Never hardcode secrets or identifiers
+in source files: missing values fail fast in ChromaRepository with a
+clear message instead of silently connecting to the wrong database.
 """
 
 import os
@@ -14,12 +16,8 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 CHROMA_API_KEY = os.environ.get("CHROMA_API_KEY", "")
-CHROMA_TENANT = os.environ.get(
-    "CHROMA_TENANT", "abe558cc-e541-421b-a88e-a1bc72b696db"
-)
-CHROMA_DATABASE = os.environ.get(
-    "CHROMA_DATABASE", "chroma_movieKnowledgeBase"
-)
+CHROMA_TENANT = os.environ.get("CHROMA_TENANT", "")
+CHROMA_DATABASE = os.environ.get("CHROMA_DATABASE", "")
 
 # API version: single source of truth for the FastAPI app and the
 # health endpoint response.
