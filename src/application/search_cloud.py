@@ -22,8 +22,10 @@ def search_movies_cloud(query, n_results=5):
     query_embedding = embedder.model.encode([query], normalize_embeddings=True)[0]
 
     repo = ChromaRepository()
-    # Fetch a wider candidate pool, re-rank by relevance, return the best
-    pool_size = min(n_results * 4, 100)
+    # Fetch a wide candidate pool: Chroma's HNSW index is approximate and
+    # misses true neighbors on small pools (e.g. Titanic for descriptive
+    # queries). 100 candidates keeps recall high before re-ranking.
+    pool_size = max(n_results, 100)
     results = repo.search(query_embedding, pool_size)
     results = rerank_results(results)
 

@@ -8,7 +8,9 @@ the semantic candidates by combining three signals:
               + W_RATING  * rating_score
               + W_YEAR    * year_score
 
-- similarity:   1 - distance/2 (cosine distance of normalized embeddings)
+- similarity:   1 - distance^2/2. The collection uses Chroma's default
+                L2 metric on normalized embeddings, where L2^2 = 2 - 2*cos,
+                so this recovers the exact cosine similarity.
 - rating_score: vote_average / 10 (parsed from the document text)
 - year_score:   min-max normalized release year within the result set
                 (newer = more relevant)
@@ -56,7 +58,7 @@ def relevance_scores(documents, distances, metadatas):
 
     scored = []
     for i, (doc, dist) in enumerate(zip(documents, distances)):
-        similarity = 1.0 - (dist / 2.0)          # cosine distance in [0, 2]
+        similarity = 1.0 - (dist ** 2) / 2.0    # L2^2 = 2 - 2*cos
         rating_score = parse_rating(doc) / 10.0  # in [0, 1]
         if year_max > year_min:
             year_score = (years[i] - year_min) / (year_max - year_min)
