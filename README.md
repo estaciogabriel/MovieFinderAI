@@ -314,12 +314,25 @@ CHROMA_DATABASE=your-database      # required
 
 ## Other Interfaces
 
-```bash
-# Gradio chat app
-make run            # src/interfaces/pages/gradio_app.py
+### Gradio Chat
 
-# Streamlit dashboard
-make run-dashboard  # src/interfaces/pages/dashboard.py
+```bash
+make run    # src/interfaces/pages/gradio_app.py
+```
+
+Describe a movie in natural language and the chat returns the closest
+matches from the knowledge base:
+
+![Movie Knowledge Chat](prints/gradio.jpeg)
+
+If the database is empty or unreachable, the chat replies with the same
+guidance messages as the API (which variable to fix in `.env`), instead
+of a raw traceback.
+
+### Streamlit Dashboard
+
+```bash
+make run-dashboard    # src/interfaces/pages/dashboard.py
 ```
 
 ## License
