@@ -8,9 +8,33 @@ A system that allows searching for movies using natural language. Type "action m
 
 ## How It Works
 
-1. 43,970 movies from Kaggle transformed into embeddings (768-dimensional vectors)
+1. ~44,500 movies from the TMDB dataset transformed into embeddings
+   (768-dimensional vectors, all-mpnet-base-v2)
 2. Stored in Chroma Cloud (vector database)
-3. Semantic similarity search using sentence-transformers
+3. Semantic similarity search: the query is embedded and matched against
+   the movie embeddings (a pool of 100 candidates is fetched)
+4. Results are re-ranked by relevance (see below) and the top `n_results`
+   are returned
+
+## Search Ranking
+
+Results are ordered by a relevance score, not by raw semantic distance:
+
+```
+relevance = 0.6 * semantic similarity
+          + 0.2 * TMDB rating
+          + 0.2 * release year (newer scores higher, normalized within the pool)
+```
+
+- Semantic similarity dominates: a clear plot match always outranks a
+  newer or higher-rated movie
+- Rating and year break ties between similar matches
+- Each result's `metadata.relevance` carries its score; `distance` keeps
+  the raw semantic distance from Chroma (L2 metric)
+
+Query style matters: describing the plot ("a young wizard discovers his
+magical abilities and attends Hogwarts") matches the movie documents much
+better than generic descriptions ("a movie about magic school").
 
 ## Technologies
 
@@ -31,8 +55,10 @@ MovieFinderAI/
 │   │   └── movie.py           # Pydantic request/response models
 │   ├── application/           # Business logic (use cases)
 │   │   ├── search.py
-│   │   ├── search_cloud.py
+│   │   ├── search_cloud.py   # Cloud search + relevance re-ranking
 │   │   ├── search_validator.py
+│   │   ├── rerank.py         # Relevance score (semantic + rating + year)
+│   │   ├── database_status.py
 │   │   └── enhanced_search.py
 │   ├── infrastructure/        # External tech: Chroma, embeddings, ML tooling
 │   │   ├── chroma_repository.py
@@ -50,9 +76,11 @@ MovieFinderAI/
 │       │       └── movies.py
 │       └── pages/             # UI interfaces
 │           ├── gradio_app.py
-│           └── dashboard.py   # Streamlit
+│           ├── dashboard.py   # Streamlit
+│           └── static/chat.css
 ├── scripts/
-│   └── pipeline.py            # Download embeddings from Chroma Cloud
+│   ├── pipeline.py            # Download embeddings from Chroma Cloud
+│   └── upload_to_chroma.py   # Populate Chroma from the TMDB CSVs (make upload)
 ├── tests/
 │   ├── conftest.py
 │   ├── api/                   # API integration tests
@@ -153,9 +181,9 @@ database (never hardcoded).
 ```json
 {
   "status": "healthy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "database_status": "connected",
-  "documents_count": 44506,
+  "documents_count": 44476,
   "message": null
 }
 ```
@@ -173,12 +201,12 @@ POST /api/v1/movies/search
 Content-Type: application/json
 
 {
-  "query": "A movie about a ship that collides with an iceberg",
-  "n_results": 5
+  "query": "A young wizard discovers his magical abilities and attends Hogwarts, where he faces the dark wizard who killed his parents",
+  "n_results": 3
 }
 ```
 
-Search for movies using semantic search.
+Search for movies using semantic search with relevance re-ranking.
 
 **Request Body:**
 - `query` (string, required): Search query for movies (max: 500 chars)
@@ -187,23 +215,36 @@ Search for movies using semantic search.
 **Response (200 OK):**
 ```json
 {
-  "query": "A movie about a ship that collides with an iceberg",
+  "query": "A young wizard discovers his magical abilities...",
   "results": [
     {
-      "document": "Battleship (2012)\nGenres: Action, Sci-Fi, Thriller\n...",
-      "distance": 0.885,
-      "metadata": { "movie_id": 85131, "title": "Battleship", "year": "2012", "genres": "..." }
+      "document": "Harry Potter and the Philosopher's Stone (2001)\nGenres: Adventure, Fantasy, Family\nDirector: Chris Columbus\n...",
+      "distance": 0.9924,
+      "metadata": {
+        "movie_id": 671,
+        "title": "Harry Potter and the Philosopher's Stone",
+        "year": "2001",
+        "genres": "Adventure, Fantasy, Family",
+        "relevance": 0.6107
+      }
     },
     { "...": "..." }
   ],
-  "count": 5,
+  "count": 3,
   "error": null
 }
 ```
 
-A semantic query describes the movie you want ("a ship that collides
-with an iceberg") and the API returns the closest matches by meaning —
-Titanic (1997) is among the expected results.
+- `distance`: raw semantic distance from Chroma (L2 metric; lower = closer)
+- `metadata.relevance`: the ranking score used to order the results
+  (see [Search Ranking](#search-ranking))
+- Results are ordered by relevance, so the first item is not necessarily
+  the smallest distance (year and rating can promote a close runner-up)
+- Distances may vary slightly between identical queries: Chroma's
+  approximate index (HNSW) is not deterministic across runs
+
+**Performance:** the first request after startup loads the embedding
+model (~5s); subsequent searches complete in roughly 0.4-0.9s end to end.
 
 **Error Responses:**
 - `422 Unprocessable Entity`: Validation error (query too long, invalid n_results)

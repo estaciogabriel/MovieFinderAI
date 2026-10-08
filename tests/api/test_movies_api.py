@@ -39,7 +39,7 @@ class TestMoviesAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "1.1.0"
+        assert data["version"] == "1.2.0"
         assert data["database_status"] == "connected"
         assert data["documents_count"] == 42
         assert data["message"] is None
