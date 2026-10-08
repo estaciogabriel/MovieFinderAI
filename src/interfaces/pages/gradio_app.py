@@ -3,6 +3,12 @@ from pathlib import Path
 import gradio as gr
 from huggingface_hub import InferenceClient
 from src.application.search_cloud import search_movies_cloud as sear
+from src.application.database_status import (
+    get_database_state,
+    POPULATE_HINT,
+    UNREACHABLE_HINT,
+)
+from src.schemas.movie import DatabaseStatus
 
 def welcome(name):
     return f"Welcome to Gradio, {name}!"
@@ -28,6 +34,13 @@ def respond(
     """
     response = ""
 
+    status, _count = get_database_state()
+    if status == DatabaseStatus.EMPTY:
+        yield POPULATE_HINT
+        return
+    if status == DatabaseStatus.UNREACHABLE:
+        yield UNREACHABLE_HINT
+        return
 
     results = sear(message, n_results=5)
 
