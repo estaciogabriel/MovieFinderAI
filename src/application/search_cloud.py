@@ -2,10 +2,21 @@
 Busca usando Chroma Cloud
 """
 
+from functools import lru_cache
+
 from src.infrastructure.embedder import DocumentEmbedder
 from src.infrastructure.chroma_repository import ChromaRepository
 from src.application.search_validator import verify_search_query
 from src.application.rerank import rerank_results
+
+EMBEDDING_MODEL = 'all-mpnet-base-v2'
+
+@lru_cache(maxsize=1)
+def _get_embedder():
+    """Load the embedding model once per process: instantiating
+    SentenceTransformer reloads a ~400MB model from disk, which must
+    not happen on every search request."""
+    return DocumentEmbedder(model_name=EMBEDDING_MODEL)
 
 def search_movies_cloud(query, n_results=5):
     """Search movies in Chroma Cloud"""
@@ -18,8 +29,7 @@ def search_movies_cloud(query, n_results=5):
             'metadatas': [[{'error': True}]]
         }
 
-    embedder = DocumentEmbedder(model_name='all-mpnet-base-v2')
-    query_embedding = embedder.model.encode([query], normalize_embeddings=True)[0]
+    query_embedding = _get_embedder().model.encode([query], normalize_embeddings=True)[0]
 
     repo = ChromaRepository()
     # Fetch a wide candidate pool: Chroma's HNSW index is approximate and
