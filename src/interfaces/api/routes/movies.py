@@ -16,6 +16,7 @@ from src.schemas.movie import (
 )
 from src.application.search_cloud import search_movies_cloud
 from src.application.search_validator import verify_search_query
+from src.config import API_VERSION
 from src.application.database_status import (
     get_database_state,
     POPULATE_HINT,
@@ -108,19 +109,19 @@ async def health_check(response: Response):
 
     if status == DatabaseStatus.CONNECTED:
         return HealthCheckResponse(
-            status="healthy", version="1.1.0",
+            status="healthy", version=API_VERSION,
             database_status=status, documents_count=count, message=None
         )
 
     if status == DatabaseStatus.EMPTY:
         return HealthCheckResponse(
-            status="healthy", version="1.1.0",
+            status="healthy", version=API_VERSION,
             database_status=status, documents_count=count, message=POPULATE_HINT
         )
 
     response.status_code = 503
     return HealthCheckResponse(
-        status="degraded", version="1.1.0",
+        status="degraded", version=API_VERSION,
         database_status=status, documents_count=0, message=UNREACHABLE_HINT
     )
 

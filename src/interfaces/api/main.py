@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
+from src.config import API_VERSION
 from src.interfaces.api.routes.movies import router as movies_router
 
 # Application logging: timestamped, level-tagged, one line per event.
@@ -21,7 +22,7 @@ logger = logging.getLogger("moviefinder.api")
 app = FastAPI(
     title="MovieFinderAI API",
     description="Semantic search API for movies using embeddings and Chroma Cloud",
-    version="1.2.0",
+    version=API_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"

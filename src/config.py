@@ -20,3 +20,7 @@ CHROMA_TENANT = os.environ.get(
 CHROMA_DATABASE = os.environ.get(
     "CHROMA_DATABASE", "chroma_movieKnowledgeBase"
 )
+
+# API version: single source of truth for the FastAPI app and the
+# health endpoint response.
+API_VERSION = "1.2.0"
